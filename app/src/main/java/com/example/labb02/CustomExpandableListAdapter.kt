@@ -37,7 +37,7 @@ class CustomExpandableListAdapter : BaseExpandableListAdapter {
 
     @Suppress("NAME_SHADOWING")
     override fun getGroupView(listPos: Int, isExpanded: Boolean, convertView: View?, parent: ViewGroup?): View {
-        var listTitle = getGroup(listPos) as String
+        val listTitle = getGroup(listPos) as String
         var convertView = convertView
         if (convertView == null) {
             val layoutInflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -69,7 +69,7 @@ class CustomExpandableListAdapter : BaseExpandableListAdapter {
             val layoutInflater = this.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
             convertView = layoutInflater.inflate(R.layout.list_item, null)
         }
-        val expandedListTextView : TextView = convertView!!.findViewById<TextView>(R.id.expandedListItem)
+        val expandedListTextView : TextView = convertView!!.findViewById(R.id.expandedListItem)
         expandedListTextView.text = expandedListText as CharSequence
         return convertView
     }

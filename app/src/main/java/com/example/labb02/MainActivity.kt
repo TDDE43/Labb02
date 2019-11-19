@@ -1,18 +1,18 @@
 package com.example.labb02
 
+import android.annotation.SuppressLint
+import android.graphics.Color
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.ExpandableListAdapter
 import android.widget.ExpandableListView
 import android.widget.TextView
-import android.widget.Toast
 
 import kotlinx.android.synthetic.main.activity_main.*
-// import androidx.core.app.ComponentActivity.ExtraData
-// import androidx.core.content.ContextCompat.getSystemService
-// import android.icu.lang.UCharacter.GraphemeClusterBreak.T
 
 
 
@@ -22,8 +22,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var expandableListAdapter: ExpandableListAdapter
     private lateinit var expandableListTitle: ArrayList<String>
     private lateinit var expandableListDetail: HashMap<String, ArrayList<String>>
+    private var groupIndex = -1
+    private var itemIndex = -1
 
 
+    @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -40,35 +43,86 @@ class MainActivity : AppCompatActivity() {
         expandableListView.setOnGroupExpandListener(
             @Override
             fun (groupPos: Int) {
-                Toast.makeText(applicationContext,
-                    expandableListTitle[groupPos] + " List Expanded.",
-                    Toast.LENGTH_SHORT).show()
-                path.text = "/${expandableListTitle[groupPos]}"
+                if (groupPos == groupIndex) {
+                    checkItem(groupIndex, itemIndex)
+                } else if (expandableListView.isGroupExpanded(groupIndex)) {
+                    checkItem(groupIndex, itemIndex)
+                }
             }
         )
 
         expandableListView.setOnGroupCollapseListener(
             @Override
             fun (groupPos: Int) {
-                Toast.makeText(applicationContext,
-                    expandableListTitle[groupPos] + " List Collapsed.",
-                    Toast.LENGTH_SHORT).show()
-                path.text = "/${expandableListTitle[groupPos]}"
+                if (groupPos == groupIndex) {
+                    uncheckItems()
+                } else {
+                    checkItem(groupIndex, itemIndex)
+                }
             }
         )
 
         expandableListView.setOnChildClickListener { expandableListView, view, groupPos, childPos, id ->
-            Toast.makeText(
-                applicationContext,
-                expandableListTitle[groupPos]
-                        + " -> "
-                        + expandableListDetail[expandableListTitle[groupPos]]!![childPos],
-                Toast.LENGTH_SHORT
-            ).show()
             path.text = "/${expandableListTitle[groupPos]}/${expandableListDetail[expandableListTitle[groupPos]]!![childPos]}"
-            false
+
+            val index = expandableListView.getFlatListPosition(ExpandableListView.getPackedPositionForChild(groupPos, childPos))
+            expandableListView.setItemChecked(index, true)
+
+            true
         }
 
+        path.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(p0: Editable?) {
+                if (p0!!.isNotEmpty()){
+                    val pathParts = p0.split("/")
+                    println(pathParts)
+
+                    if (pathParts[0] == "" && pathParts[1] in expandableListTitle) {
+                        path.setBackgroundColor(Color.TRANSPARENT)
+                        val groupToOpen = expandableListTitle.indexOf(pathParts[1])
+                        expandableListView.expandGroup(groupToOpen)
+
+                        if (groupToOpen == groupIndex) checkItem(groupIndex, itemIndex)
+
+                        if (pathParts.size > 2 && expandableListDetail[pathParts[1]]!!.contains(pathParts[2])) {
+
+                            groupIndex = expandableListTitle.indexOf(pathParts[1])
+                            itemIndex = expandableListDetail[pathParts[1]]!!.indexOf(pathParts[2])
+
+                            checkItem(groupIndex, itemIndex)
+                        } else if (pathParts.size > 2 && !subStringInList(pathParts[2], expandableListDetail[pathParts[1]] as ArrayList<String>)) {
+                            path.setBackgroundColor(Color.RED)
+                        }
+                    } else if (pathParts[0] == "") {
+                        if (subStringInList(pathParts[1], expandableListTitle)) {
+                            path.setBackgroundColor(Color.TRANSPARENT)
+                        } else {
+                            path.setBackgroundColor(Color.RED)
+                        }
+                        for (i in 0..expandableListTitle.size) {
+                            expandableListView.collapseGroup(i)
+                        }
+                        uncheckItems()
+                    } else if (pathParts[0] != "") {
+                        path.setBackgroundColor(Color.RED)
+                    } else {
+                        for (i in 0..expandableListTitle.size) {
+                            expandableListView.collapseGroup(i)
+                        }
+                        uncheckItems()
+                    }
+                } else {
+                    path.text = "/"
+                }
+
+            }
+
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+            }
+
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+            }
+        })
 
 
 
@@ -106,12 +160,33 @@ class MainActivity : AppCompatActivity() {
         val dark = ArrayList<String>()
         dark.add("Marine")
         dark.add("Ebony")
-        dark.add("indigo")
+        dark.add("Indigo")
+        dark.add("Yellow")
 
         colorList["Light"] = light
         colorList["Medium"] = medium
         colorList["Dark"] = dark
 
         return colorList
+    }
+
+    private fun checkItem(groupPos: Int, itemPos: Int) : Int {
+        if (groupPos < 0 || itemPos < 0) return -1
+        val index = expandableListView.getFlatListPosition(ExpandableListView.getPackedPositionForChild(groupPos, itemPos))
+        expandableListView.setItemChecked(index, true)
+        return index
+    }
+
+    private fun uncheckItems() {
+        expandableListView.setItemChecked(-1, true)
+    }
+
+    private fun subStringInList(str: String, list: ArrayList<String>) : Boolean {
+        for (item in list) {
+            if (str.length <= item.length && str == item.substring(0, str.length)) {
+                return true
+            }
+        }
+        return false
     }
 }
