@@ -43,6 +43,7 @@ class MainActivity : AppCompatActivity() {
         expandableListView.setOnGroupExpandListener(
             @Override
             fun (groupPos: Int) {
+                uncheckItems()
                 if (groupPos == groupIndex) {
                     checkItem(groupIndex, itemIndex)
                 } else if (expandableListView.isGroupExpanded(groupIndex)) {
@@ -54,9 +55,8 @@ class MainActivity : AppCompatActivity() {
         expandableListView.setOnGroupCollapseListener(
             @Override
             fun (groupPos: Int) {
-                if (groupPos == groupIndex) {
-                    uncheckItems()
-                } else {
+                uncheckItems()
+                if (groupPos != groupIndex && expandableListView.isGroupExpanded(groupIndex)) {
                     checkItem(groupIndex, itemIndex)
                 }
             }
